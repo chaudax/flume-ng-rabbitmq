@@ -101,6 +101,7 @@ public class RabbitMQSource extends AbstractSource implements Configurable, Poll
             try {
                 if(log.isInfoEnabled())log.info(this.getName() + " - creating channel...");
                 _Channel = _Connection.createChannel();
+                _Channel.basicQos(500); //TODO move to configuration
                 _CounterGroup.incrementAndGet(RabbitMQConstants.COUNTER_NEW_CHANNEL);
                 if(log.isInfoEnabled())log.info(this.getName() + " - Connected to " + _ConnectionFactory.getHost() + ":" + _ConnectionFactory.getPort());
                 
