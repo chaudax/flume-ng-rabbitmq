@@ -69,7 +69,11 @@ public class RabbitMQUtil {
     public static String getExchangeName(Context context){
         return context.getString(RabbitMQConstants.CONFIG_EXCHANGENAME, "");
     }
-    
+
+    public static boolean getAutoAck(Context context){
+        return context.getBoolean(RabbitMQConstants.CONFIG_AUTOACK, false);
+    }
+
     public static String[] getTopics( Context context ) {
     	String list = context.getString( RabbitMQConstants.CONFIG_TOPICS, "" );
     	

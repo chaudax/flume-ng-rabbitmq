@@ -50,6 +50,7 @@ public class RabbitMQSource extends AbstractSource implements Configurable, Poll
     private String _QueueName;
     private String _ExchangeName;
     private String[] _Topics;
+    private boolean _AutoAck;
       
     public RabbitMQSource(){
         _CounterGroup = new CounterGroup();
@@ -62,7 +63,8 @@ public class RabbitMQSource extends AbstractSource implements Configurable, Poll
         _QueueName = RabbitMQUtil.getQueueName(context);  
         _ExchangeName = RabbitMQUtil.getExchangeName(context);
         _Topics = RabbitMQUtil.getTopics(context);
-        
+        _AutoAck = RabbitMQUtil.getAutoAck(context);
+
         ensureConfigCompleteness( context );
     }
     
@@ -135,7 +137,7 @@ public class RabbitMQSource extends AbstractSource implements Configurable, Poll
 		GetResponse response;
 
 		try {
-			response = _Channel.basicGet(_QueueName, false);
+			response = _Channel.basicGet(_QueueName, _AutoAck);
 			_CounterGroup.incrementAndGet(RabbitMQConstants.COUNTER_GET);
 		} 
 		catch (Exception ex) {
@@ -167,14 +169,16 @@ public class RabbitMQSource extends AbstractSource implements Configurable, Poll
 			return Status.BACKOFF;
 		}
 
-        try {
-            _Channel.basicAck(response.getEnvelope().getDeliveryTag(), false);
-             _CounterGroup.incrementAndGet(RabbitMQConstants.COUNTER_ACK);
-        } catch(Exception ex){
-            _CounterGroup.incrementAndGet(RabbitMQConstants.COUNTER_EXCEPTION);
-            if(log.isErrorEnabled())log.error(this.getName() + " - Exception thrown while sending ack to queue", ex);
-            resetConnection();
-            return Status.BACKOFF;            
+        if(!_AutoAck){
+            try {
+                _Channel.basicAck(response.getEnvelope().getDeliveryTag(), false);
+                 _CounterGroup.incrementAndGet(RabbitMQConstants.COUNTER_ACK);
+            } catch(Exception ex){
+                _CounterGroup.incrementAndGet(RabbitMQConstants.COUNTER_EXCEPTION);
+                if(log.isErrorEnabled())log.error(this.getName() + " - Exception thrown while sending ack to queue", ex);
+                resetConnection();
+                return Status.BACKOFF;
+            }
         }
         
         return Status.READY;       
