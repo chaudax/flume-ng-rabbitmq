@@ -12,7 +12,7 @@ import org.apache.flume.event.SimpleEvent
 import akka.actor._
 
 import com.github.sstone.amqp.{Consumer, ConnectionOwner}
-import com.github.sstone.amqp.Amqp.{Ack, AddQueue, QueueParameters, Delivery}
+import com.github.sstone.amqp.Amqp._
 import scala.concurrent.duration._
 
 import com.rabbitmq.client.AMQP.BasicProperties
@@ -56,11 +56,14 @@ class RabbitMQSource extends AbstractSource with Configurable with EventDrivenSo
     val listener = system.actorOf(Props(new Actor {
       def receive = {
         case Delivery(consumerTag, envelope, properties, body) =>
+          val tag = envelope.getDeliveryTag
           try{
             getChannelProcessor.processEvent(Event(body, properties))
-            sender ! Ack(envelope.getDeliveryTag)
+            sender ! Ack(tag)
           } catch {
-            case t: Throwable => logger.error("Cannot process event", t)
+            case t: Throwable =>
+              sender ! Reject(tag)
+              logger.error("Cannot process event", t)
           }
       }
     }))
@@ -71,9 +74,9 @@ class RabbitMQSource extends AbstractSource with Configurable with EventDrivenSo
   override def start() {
     logger.info("Source starting")
     counterGroup.incrementAndGet("open.attempts")
-    Thread.sleep(5000)
     consumer.get ! AddQueue(queueParamaters.get)
   }
+
   override def stop() {
     logger.info("Source stopping")
     connection map {
