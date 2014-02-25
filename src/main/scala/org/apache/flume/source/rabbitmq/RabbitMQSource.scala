@@ -50,23 +50,35 @@ class RabbitMQSource extends AbstractSource with Configurable with EventDrivenSo
 
     val connFactory = getFactory(context)
 
-    val conn = system.actorOf(ConnectionOwner.props(connFactory, 1 second))
+    val conn = system.actorOf(
+      ConnectionOwner.props(connFactory, 1 second).
+      withDispatcher("pinned-dispatcher"))
     connection = Some(conn)
 
     val listener = system.actorOf(Props(new Actor {
+      private val logger: Logger = LoggerFactory.getLogger(classOf[RabbitMQSource])
+      lazy val channelProcessor = getChannelProcessor
+      var unacked = 0L
       def receive = {
         case Delivery(consumerTag, envelope, properties, body) =>
           val tag = envelope.getDeliveryTag
-          try {
-            getChannelProcessor.processEvent(Event(body, properties))
-            sender ! Ack(tag)
-          } catch {
-            case t: Throwable =>
-              sender ! Reject(tag)
-              logger.error("Cannot process event", t)
+          if(unacked >=100){
+            sender ! Reject(tag)
+          }
+          else {
+            unacked += 1
+            try {
+              channelProcessor.processEvent(Event(body, properties))
+              sender ! Ack(tag)
+            } catch {
+              case t: Throwable =>
+                sender ! Reject(tag)
+                logger.warn("Cannot process event:", t)
+            }
+            unacked -= 1
           }
       }
-    }))
+    }).withDispatcher("pinned-dispatcher"))
 
     consumer = Some(ConnectionOwner.createChildActor(conn, Consumer.props(
       listener,

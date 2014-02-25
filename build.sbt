@@ -22,4 +22,5 @@ resolvers += "sonatype snapshots" at "https://oss.sonatype.org/content/repositor
 
 libraryDependencies ++= Seq(
   "com.github.sstone" %% "amqp-client" % "1.3-ML3",
-  "com.typesafe.akka" %% "akka-actor" % "2.2.3")
+  "com.typesafe.akka" %% "akka-actor" % "2.2.3",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.2.3")

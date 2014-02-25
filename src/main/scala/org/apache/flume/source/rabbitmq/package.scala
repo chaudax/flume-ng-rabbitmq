@@ -26,9 +26,11 @@ package object rabbitmq {
   val Prefix: String = "RabbitMQ"
 
 
-  val loggers = ConfigValueFactory.fromIterable(Seq("akka.event.slf4j.Slf4jLogger"))
-  val akkaConfig = ConfigFactory.load().withValue("loggers", loggers)
-  val system = ActorSystem("Flume-RabbitMQ-Actors-System", akkaConfig)
+//  val loggers = ConfigValueFactory.fromIterable(Seq("akka.event.slf4j.Slf4jLogger"))
+//  val loglevel = ConfigValueFactory.fromAnyRef("DEBUG")
+//  val akkaConfig = ConfigFactory.load().withValue("event-handlers", loggers)//.withValue("loglevel", loglevel)
+//  val system = ActorSystem("Flume-RabbitMQ", akkaConfig)
+  val system = ActorSystem("Flume-RabbitMQ")
 
   def getHeaders(properties: BasicProperties) = Map.empty[String, String]
   //    properties.getHeaders map {
