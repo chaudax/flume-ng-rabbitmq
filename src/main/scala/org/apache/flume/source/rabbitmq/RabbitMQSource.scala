@@ -92,7 +92,7 @@ class RabbitMQSource extends AbstractSource with Configurable with EventDrivenSo
       logger.info("Source starting")
       Amqp.waitForConnection(system, c).await()
       counterGroup.incrementAndGet("open.attempts")
-      c ! Record(AddQueue(queueParamaters.get))
+      c.tell(Record(AddQueue(queueParamaters.get)), ActorRef.noSender)
     }
   }
 
