@@ -32,10 +32,10 @@ package object rabbitmq {
 //  val system = ActorSystem("Flume-RabbitMQ", akkaConfig)
   val system = ActorSystem("Flume-RabbitMQ")
 
-  def getHeaders(properties: BasicProperties) = Map.empty[String, String]
-  //    properties.getHeaders map {
-  //      (kv: (String, AnyRef)) => (kv._1, kv._2.toString)
-  //    }
+  def getHeaders(properties: BasicProperties) =
+    properties.getHeaders map {
+      (kv: (String, AnyRef)) => (kv._1, kv._2.toString)
+    }
 
 
   def noneIfNull[T](value: T): Option[T] = value match {
